@@ -4,7 +4,7 @@
 //! designed to make invalid states unrepresentable.
 /// Select Graphic Rendition (SGR) attributes for text formatting.
 /// Used to control style, color, and effects in ANSI escape codes.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum SgrAttribute {
     /// Reset all attributes.
     Reset,
@@ -35,7 +35,7 @@ pub enum SgrAttribute {
 }
 
 /// Color specification for ANSI codes, supporting standard, 8-bit, and 24-bit colors.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Color {
     /// Standard black.
     Black,
@@ -76,7 +76,7 @@ pub enum Color {
 }
 
 /// Cursor movement commands for ANSI escape codes.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum CursorMove {
     /// Move cursor up by `u16` rows.
     Up(u16),
@@ -97,7 +97,7 @@ pub enum CursorMove {
 }
 
 /// Erase display or line commands for clearing parts of the terminal.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Erase {
     /// Erase part or all of the display.
     Display(EraseMode),
@@ -106,7 +106,7 @@ pub enum Erase {
 }
 
 /// Mode for erase operations (display or line).
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum EraseMode {
     /// Erase from cursor to end of screen/line.
     ToEnd,
@@ -117,7 +117,7 @@ pub enum EraseMode {
 }
 
 /// Device control commands for cursor and terminal state.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum DeviceControl {
     /// Save the current cursor position.
     SaveCursor,
@@ -130,7 +130,7 @@ pub enum DeviceControl {
 }
 
 /// The top-level enum representing any ANSI escape code supported by this library.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum AnsiEscape {
     /// Select Graphic Rendition (SGR) attribute.
     Sgr(SgrAttribute),

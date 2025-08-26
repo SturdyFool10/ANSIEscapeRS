@@ -17,8 +17,8 @@ pub struct AnsiSpan {
     pub start: usize,
     /// Byte offset (exclusive) where the span ends.
     pub end: usize,
-    /// The ANSI escape code affecting this span.
-    pub code: AnsiEscape,
+    /// The set of SGR attributes affecting this span.
+    pub codes: Vec<SgrAttribute>,
 }
 
 /// Represents a point event (e.g., cursor move) at a position in the text.
@@ -72,18 +72,83 @@ impl<'a> AnsiParser<'a> {
     /// Returns an [`AnsiParseResult`] containing the cleaned text, spans, and points.
     pub fn parse_annotated(&mut self) -> AnsiParseResult {
         let mut cleaned = String::with_capacity(self.input.len());
-        let spans = Vec::new();
+        let mut spans = Vec::new();
         let mut points = Vec::new();
-        // TODO: Track open spans for SGR and similar codes
-        // For now, just skeleton logic
+        use std::collections::BTreeSet;
+        let mut active_sgrs = BTreeSet::new(); // BTreeSet for deterministic order
+        let mut current_span_start: Option<usize> = None;
+        let mut last_emitted_sgrs = BTreeSet::new();
+
         while self.pos < self.input.len() {
             if let Some((escapes, consumed)) = self.parse_next_escapes() {
-                // Emit all parsed codes as points at the current output_pos
                 for escape in escapes {
-                    points.push(AnsiPoint {
-                        pos: self.output_pos,
-                        code: escape,
-                    });
+                    // Only add non-SGR codes to points
+                    if !matches!(escape, AnsiEscape::Sgr(_)) {
+                        points.push(AnsiPoint {
+                            pos: self.output_pos,
+                            code: escape.clone(),
+                        });
+                    }
+
+                    if let AnsiEscape::Sgr(sgr) = &escape {
+                        match sgr {
+                            SgrAttribute::Reset => {
+                                // If there was an active span, close it
+                                if let Some(start) = current_span_start.take() {
+                                    if !last_emitted_sgrs.is_empty() {
+                                        spans.push(AnsiSpan {
+                                            start,
+                                            end: self.output_pos,
+                                            codes: last_emitted_sgrs.iter().cloned().collect(),
+                                        });
+                                    }
+                                }
+                                active_sgrs.clear();
+                            }
+                            _ => {
+                                // If this SGR is already active, replace it (remove old, insert new)
+                                // Remove any previous instance of the same SGR "type"
+                                // For Foreground/Background/UnderlineColor, remove any previous of that type
+                                match sgr {
+                                    SgrAttribute::Foreground(_) => {
+                                        active_sgrs
+                                            .retain(|a| !matches!(a, SgrAttribute::Foreground(_)));
+                                    }
+                                    SgrAttribute::Background(_) => {
+                                        active_sgrs
+                                            .retain(|a| !matches!(a, SgrAttribute::Background(_)));
+                                    }
+                                    SgrAttribute::UnderlineColor(_) => {
+                                        active_sgrs.retain(|a| {
+                                            !matches!(a, SgrAttribute::UnderlineColor(_))
+                                        });
+                                    }
+                                    _ => {
+                                        active_sgrs.retain(|a| {
+                                            std::mem::discriminant(a) != std::mem::discriminant(sgr)
+                                        });
+                                    }
+                                }
+                                active_sgrs.insert(sgr.clone());
+                            }
+                        }
+                        // If the set of active SGRs changed, close the previous span and start a new one
+                        if active_sgrs != last_emitted_sgrs {
+                            if let Some(start) = current_span_start.take() {
+                                if !last_emitted_sgrs.is_empty() {
+                                    spans.push(AnsiSpan {
+                                        start,
+                                        end: self.output_pos,
+                                        codes: last_emitted_sgrs.iter().cloned().collect(),
+                                    });
+                                }
+                            }
+                            if !active_sgrs.is_empty() {
+                                current_span_start = Some(self.output_pos);
+                            }
+                            last_emitted_sgrs = active_sgrs.clone();
+                        }
+                    }
                 }
                 self.pos += consumed;
             } else {
@@ -98,6 +163,22 @@ impl<'a> AnsiParser<'a> {
                 }
             }
         }
+        // If a span is still open at the end, close it
+        if let Some(start) = current_span_start.take() {
+            if !last_emitted_sgrs.is_empty() {
+                spans.push(AnsiSpan {
+                    start,
+                    end: self.output_pos,
+                    codes: last_emitted_sgrs.iter().cloned().collect(),
+                });
+            }
+        }
+        // Filter out spans with matching start and end positions
+        let spans = spans
+            .into_iter()
+            .filter(|span| span.start != span.end)
+            .collect();
+
         AnsiParseResult {
             text: cleaned,
             spans,

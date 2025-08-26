@@ -24,17 +24,17 @@ mod ansi_interpreter;
 
 mod ansi_types;
 
-pub(crate) mod creator {
+pub mod creator {
     // Re-export all public items from creator
     pub use crate::ansi_escape::ansi_creator::*;
 }
 
 // Re-export all public items from types
-pub(crate) mod types {
+pub mod types {
     pub use crate::ansi_escape::ansi_types::*;
 }
 
 // Re-export all public items from interpreter
-pub(crate) mod interpreter {
+pub mod interpreter {
     pub use crate::ansi_escape::ansi_interpreter::*;
 }
