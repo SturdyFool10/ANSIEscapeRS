@@ -25,9 +25,9 @@
   - `AnsiCreator`: Main struct for formatting text, generating SGR (Select Graphic Rendition) codes, cursor movement, erase, and device control codes.
 - **Example**:
     ```rust
-    use ansiescapers::{AnsiCreator, SgrAttribute, Color};
+    use ansi_escapers::{creator, SgrAttribute, Color};
 
-    let creator = AnsiCreator::new();
+    let creator = creator::AnsiCreator::new();
     let bold_red = creator.format_text(
         "Hello",
         &[SgrAttribute::Bold, SgrAttribute::Foreground(Color::Red)]
@@ -35,7 +35,7 @@
     println!("{}", bold_red);
     ```
 
-### `ansi_interpreter` (accessed via crate root)
+### `interpreter` (accessed via `ansi_escapers::interpreter`)
 
 - **Purpose**: Efficient parser for interpreting ANSI escape codes in strings.
 - **Key Types**:
@@ -45,9 +45,9 @@
   - `AnsiParser`: State machine for parsing ANSI codes.
 - **Example**:
     ```rust
-    use ansiescapers::AnsiParser;
+    use ansi_escapers::interpreter::AnsiParser;
 
-    let parser = AnsiParser::new("\x1b[31mRed\x1b[0m Normal");
+    let mut parser = AnsiParser::new("\x1b[31mRed\x1b[0m Normal");
     let result = parser.parse_annotated();
     println!("{:?}", result.spans);
     ```
@@ -74,9 +74,9 @@ ansi_escapers = "0.1.0"
 Import and use in your Rust code (all main types are available from the crate root):
 
 ```rust
-use ansiescapers::{AnsiCreator, SgrAttribute, Color};
+use ansi_escapers::{creator, SgrAttribute, Color};
 
-let creator = AnsiCreator::new();
+let creator = creator::AnsiCreator::new();
 let styled = creator.format_text(
     "Hello, world!",
     &[SgrAttribute::Bold, SgrAttribute::Foreground(Color::Blue)]
@@ -91,7 +91,7 @@ println!("{}", styled);
 The library can detect terminal capabilities:
 
 ```rust
-use ansiescapers::AnsiEnvironment;
+use ansi_escapers::AnsiEnvironment;
 
 let env = AnsiEnvironment::detect();
 println!(
