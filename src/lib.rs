@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 //! Library root for ANSIEscapeRS.
 //! Exposes the `ansi_escape` module.
 
