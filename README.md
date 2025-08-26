@@ -68,7 +68,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-ansi_escapers = "0.1.0"
+ansi_escapers = "0.2.0"
 ```
 
 Import and use in your Rust code (all main types are available from the crate root):
