@@ -1,0 +1,12 @@
+[package]
+name = "ansi_escapers"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+atty = "0.2.14"
+regex = "1.11.1"
+
+[lints]
+dead_code = "allow"
+# allow dead code, do not pop a warning, this is an API so we are going to have a lot of things we do not internally use
