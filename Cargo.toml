@@ -2,6 +2,8 @@
 name = "ansi_escapers"
 version = "0.1.0"
 edition = "2024"
+description = "A Rust library for ANSI escape code parsing and manipulation."
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 atty = "0.2.14"
